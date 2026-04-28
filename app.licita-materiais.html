@@ -2688,7 +2688,7 @@ async function salvarItemAtual(itemNum, status) {
       ppItensPreview.forEach(function(it, idx) {
         const k = (it.itemNum || '?') + '_' + String(it.catmat || '');
         if (k === itemKey && ppSelecionados[itemKey] && ppSelecionados[itemKey].has(idx)) {
-          selecionadosPncpIds.push(it.pncpId);
+          selecionadosPncpIds.push(it.linkComprasNet || it.pncpId + '|' + it.preco);
           itensSelecionados.push(it);
         }
       });
@@ -3689,31 +3689,43 @@ async function ppBuscarMaisAPI(itemKey) {
   const btn    = btnDiv ? btnDiv.querySelector('button') : null;
   if (btn) btn.textContent = '⏳ Buscando…';
 
+  // ✅ Próxima página, não sempre 1
+  const proximaPagina = (pag.paginaAtual || 1) + 1;
+
   try {
     const r = await gasCall('buscarMaisItensPNCP', {
-      catmat:   pag.catmat,
-      pagina:   1,
-      itemNum:  pag.itemNum,
-      descItem: pag.descItem
+      catmat:      pag.catmat,
+      pagina:      proximaPagina,         // ✅ página correta
+      totalPaginas: pag.totalPaginas || 1, // ✅ envia para o backend validar
+      itemNum:     pag.itemNum,
+      descItem:    pag.descItem
     });
 
-    if (r.ok && r.itens.length > 0) {
+    if (r.ok && r.itens && r.itens.length > 0) {
       r.itens.forEach(function(it) {
         if (!it.linkPNCP && it.pncpId) it.linkPNCP = _parsearLinkPNCP(it.pncpId);
         it.fromRascunho = false;
       });
 
-      // Filtra para não duplicar os que já estão em tela (do rascunho)
-      const pncpIdsExistentes = new Set(ppItensPreview.map(function(it) {
-        return (it.itemNum || '?') + '_' + String(it.catmat || '') === itemKey ? it.pncpId : null;
-      }));
+      // ✅ Chave única correta: linkComprasNet (distingue items do mesmo processo)
+      const linksExistentes = new Set(
+        ppItensPreview
+          .filter(function(it) {
+            return (it.itemNum || '?') + '_' + String(it.catmat || '') === itemKey;
+          })
+          .map(function(it) { return it.linkComprasNet || it.pncpId + '|' + it.preco; })
+      );
 
-      const novos = r.itens.filter(function(it) { return !pncpIdsExistentes.has(it.pncpId); });
+      const novos = r.itens.filter(function(it) {
+        var chave = it.linkComprasNet || it.pncpId + '|' + it.preco;
+        return !linksExistentes.has(chave);
+      });
+
       const idxInicio = ppItensPreview.length;
       novos.forEach(function(it) { ppItensPreview.push(it); });
 
       const tbody = document.getElementById('pp-tbody-' + itemKey);
-      if (tbody) {
+      if (tbody && novos.length > 0) {
         let htmlExtra = '';
         novos.forEach(function(it, i) {
           htmlExtra += _renderLinhaItem({ it, idx: idxInicio + i }, itemKey);
@@ -3721,40 +3733,41 @@ async function ppBuscarMaisAPI(itemKey) {
         tbody.insertAdjacentHTML('beforeend', htmlExtra);
       }
 
-      // Atualiza paginação para modo API
+      // ✅ Atualiza paginação com a página que foi realmente buscada
       ppPaginacao[itemKey].modoRascunho   = false;
-      ppPaginacao[itemKey].paginaAtual    = 1;
+      ppPaginacao[itemKey].paginaAtual    = r.paginaAtual || proximaPagina;
       ppPaginacao[itemKey].totalPaginas   = r.totalPaginas   || 1;
-      ppPaginacao[itemKey].totalRegistros = r.totalRegistros || novos.length;
-
-      // Novos itens desmarcados por padrão
-      // (não adicionamos ao ppSelecionados — ficam desmarcados)
+      ppPaginacao[itemKey].totalRegistros = r.totalRegistros || 0;
 
       ppAtualizarSelecao(itemKey);
 
-      // Atualiza botão Ver mais se houver mais páginas
-      const temMais = r.totalPaginas > 1;
+      // ✅ Botão "Ver mais" apenas se ainda há páginas
+      const temMais = !r.semMais && (r.paginaAtual < r.totalPaginas);
       const vermaisDiv = document.getElementById('pp-vermais-' + itemKey);
       if (temMais && !vermaisDiv) {
+        const restantes = r.totalRegistros - ppItensPreview.filter(function(it) {
+          return (it.itemNum || '?') + '_' + String(it.catmat || '') === itemKey;
+        }).length;
         if (btnDiv) btnDiv.insertAdjacentHTML('beforebegin', `
           <div id="pp-vermais-${itemKey}" style="text-align:center;padding:8px;">
             <button onclick="ppVerMais('${itemKey}')"
               style="background:none;border:1px solid var(--blue);border-radius:6px;
                      color:var(--blue);font-size:12px;font-weight:600;padding:6px 18px;
                      cursor:pointer;font-family:inherit;">
-              ▼ Ver mais ${r.totalRegistros - r.itens.length} contratação(ões)
+              ▼ Ver mais ${restantes} contratação(ões)
             </button>
           </div>`);
       }
     }
 
+    // ✅ Remove botão "Buscar mais" sempre ao concluir
     if (btnDiv) btnDiv.remove();
 
   } catch(e) {
     if (btn) btn.textContent = '🔍 Buscar mais contratações na API (erro — tente novamente)';
     toast('❌', 'Erro ao buscar da API', e.message, false);
   }
-} 
+}
 // ─── Renderiza uma linha da tabela de itens ────────────────────
 function _renderLinhaItem(entry, itemKey) {
   const it  = entry.it;
@@ -4122,7 +4135,7 @@ async function salvarRascunhoPP() {
       ppItensPreview.forEach(function(it2, idx2) {
         const k2 = (it2.itemNum || '?') + '_' + String(it2.catmat || '');
         if (k2 === itemKey && ppSelecionados[itemKey] && ppSelecionados[itemKey].has(idx2)) {
-          selecionadosPncpIds.push(it2.pncpId);
+          selecionadosPncpIds.push(it2.linkComprasNet || it2.pncpId + '|' + it2.preco);
         }
       });
 
