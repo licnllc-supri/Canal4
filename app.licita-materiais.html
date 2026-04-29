@@ -295,9 +295,20 @@ body{background:var(--gray1);color:var(--dark);font-family:'Segoe UI',sans-serif
     <div><div class="htitle">Suprimentos/Materiais</div><div class="hsub">Diretoria Geral de Administração · Unicamp</div></div>
   </div>
   <div class="hright">
-    <button class="btn-em-andamento" onclick="abrirModalEmAndamento()" style="margin-right:8px;">📋 Em Andamento</button>
-    <button class="btn-em-andamento" onclick="abrirModalRenovarAta()" style="margin-right:8px;">🔄 Renovar ATA</button>
-    <button class="btn-novo-proc" onclick="abrirModalNovoProcesso()">＋ Novo Processo</button>
+<button class="btn-em-andamento" onclick="abrirModalEmAndamento()" style="margin-right:8px;"
+  data-help="Exibe todos os processos que estão em andamento, organizados por comprador.">
+  📋 Em Andamento
+</button>
+
+<button class="btn-em-andamento" onclick="abrirModalRenovarAta()" style="margin-right:8px;"
+  data-help="Renova uma ATA de Registro de Preços existente, aproveitando os dados do processo original.">
+  🔄 Renovar ATA
+</button>
+
+<button class="btn-novo-proc" onclick="abrirModalNovoProcesso()"
+  data-help="Abre o formulário para cadastrar um novo processo de compra. Você pode preencher manualmente ou importar um TR Técnico em PDF.">
+  ＋ Novo Processo
+</button>
 <div style="position:relative;">
       <div class="avatar" id="avatar-btn" onclick="toggleAvatarMenu()">G</div>
       <div id="avatar-menu" style="
@@ -601,25 +612,40 @@ body{background:var(--gray1);color:var(--dark);font-family:'Segoe UI',sans-serif
       <div style="background:#e8f4fd;border:1px solid #bbdefb;border-radius:9px;padding:12px 14px;margin-bottom:10px;">
         <div style="font-size:11px;font-weight:700;color:#1565c0;margin-bottom:4px;">📄 Tem o TR Técnico em PDF?</div>
         <div style="font-size:11px;color:#4b5563;margin-bottom:8px;font-family:monospace;">Importe e os campos serão preenchidos automaticamente</div>
-        <button class="abtn util" style="width:100%;justify-content:center;padding:10px;" onclick="abrirLeituraTR('novo')" id="btn-ler-tr-novo">
+        <button class="abtn util" style="width:100%;justify-content:center;padding:10px;" onclick="abrirLeituraTR('novo')" id="btn-ler-tr-novo"data-help="Importe o TR Técnico em PDF e o sistema preencherá os campos automaticamente.">  
           <span class="bico">📄</span>
           <span class="btxt"><span class="blabel">Selecionar PDF do TR Técnico</span></span>
         </button>
         <div id="tr-preview-novo" style="display:none;"></div>
       </div>
-
-      <div class="mfsec">Identificação</div>
-      <div class="fe"><label>Número do Processo <span class="req">*</span></label><input id="n-proc" placeholder="Ex: 01-P-2646/2026"/></div>
-      <div class="fe">
-        <label>Tipo de Contratação <span class="req">*</span></label>
-        <select id="np-tipo">
-          <option value="Aquisicao">Aquisição de Material</option>
-          <option value="SRP">Registro de Preços (SRP)</option>
-        </select>
-      </div>
-      <div class="fe"><label>Interessado / Unidade <span class="req">*</span></label><input id="n-int" placeholder="Ex: Hospital da Mulher / CAISM"/></div>
-      <div class="fe"><label>Objeto / Assunto <span class="req">*</span></label><textarea id="n-obj" placeholder="Ex: Registro de Preços de Eletrodo Descartável"></textarea></div>
-      <div class="fe"><label>Resumo para nome da pasta <span class="req">*</span></label><input id="n-res" placeholder="Ex: RP de Eletrodo Descartável"/><span class="hint">A pasta será criada como: (nº processo) - (resumo)</span></div>
+<!-- campo Número do Processo -->
+<div class="fe">
+  <label>Número do Processo <span class="req">*</span></label>
+  <input id="n-proc" placeholder="Ex: 01-P-2646/2026"
+    data-help="Número oficial do processo administrativo. Ex: 01-P-2646/2026"/>
+</div>
+<!-- campo Tipo de Contratação -->
+<div class="fe">
+  <label>Tipo de Contratação <span class="req">*</span></label>
+  <select id="np-tipo"
+    data-help="Aquisição de Material: compra. Registro de Preços (SRP): para criar uma ATA com validade de até 12 meses, permitindo compras parceladas.">
+    <option value="Aquisicao">Aquisição de Material</option>
+    <option value="SRP">Registro de Preços (SRP)</option>
+  </select>
+</div>
+<!-- campo Interessado -->
+<div class="fe">
+  <label>Interessado / Unidade <span class="req">*</span></label>
+  <input id="n-int" placeholder="Ex: Hospital da Mulher / CAISM"
+    data-help="Unidade solicitante do processo. Usado para identificar a pasta no Drive e nos relatórios."/>
+</div>      <div class="fe"><label>Objeto / Assunto <span class="req">*</span></label><textarea id="n-obj" placeholder="Ex: Registro de Preços de Eletrodo Descartável"></textarea></div>
+<!-- campo Resumo -->
+<div class="fe">
+  <label>Resumo para nome da pasta <span class="req">*</span></label>
+  <input id="n-res" placeholder="Ex: RP de Eletrodo Descartável"
+    data-help="Versão curta do objeto. A pasta no Drive será criada como: (nº processo) - (resumo)."/>
+  <span class="hint">A pasta será criada como: (nº processo) - (resumo)</span>
+</div>
     </div>
     <div class="mftr">
       <div class="mhint">Pasta será criada na Drive do comprador</div>
@@ -5222,6 +5248,947 @@ function _carregarPdfLib() {
     document.head.appendChild(s);
   });
 }
+/* ═══════════════════════════════════════════════════════════════
+   help-system.js · Licita Materiais
+   Tooltips automáticos + Tour guiado + Modo Prática interativo
+   Cole o conteúdo deste arquivo no final do seu <script>
+   ═══════════════════════════════════════════════════════════════ */
+
+(function () {
+  'use strict';
+
+  /* ─── ESTILOS ─────────────────────────────────────────────── */
+  const css = `
+    .hlp-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 17px; height: 17px; border-radius: 50%;
+      background: #dbeafe; color: #1d4ed8;
+      border: none; cursor: pointer; font-size: 10px; font-weight: 700;
+      font-family: inherit; line-height: 1; vertical-align: middle;
+      margin-left: 5px; flex-shrink: 0;
+      transition: background .15s, transform .15s;
+      position: relative; z-index: 1;
+    }
+    .hlp-btn:hover { background: #bfdbfe; transform: scale(1.1); }
+
+    .hlp-tooltip {
+      position: fixed; z-index: 99999;
+      background: #1e3a5f; color: #fff;
+      font-size: 12px; line-height: 1.55;
+      padding: 10px 13px; border-radius: 8px;
+      max-width: 260px; width: max-content;
+      box-shadow: 0 4px 16px rgba(0,0,0,.18);
+      pointer-events: none; opacity: 0;
+      transition: opacity .15s;
+      font-family: 'DM Sans', system-ui, sans-serif;
+    }
+    .hlp-tooltip.visible { opacity: 1; }
+    .hlp-tooltip::after { content: ''; position: absolute; border: 5px solid transparent; }
+    .hlp-tooltip.arrow-bottom::after { border-top-color: #1e3a5f; top: 100%; left: 16px; }
+    .hlp-tooltip.arrow-top::after   { border-bottom-color: #1e3a5f; bottom: 100%; left: 16px; }
+
+    .hlp-overlay-mask {
+      position: fixed; inset: 0; z-index: 99991;
+      background: rgba(15,23,42,.6);
+      pointer-events: all;
+    }
+    .hlp-spotlight {
+      position: fixed; z-index: 99992; border-radius: 10px;
+      box-shadow: 0 0 0 4000px rgba(15,23,42,.6);
+      transition: all .3s cubic-bezier(.4,0,.2,1);
+      pointer-events: none;
+    }
+    .hlp-spotlight.pratica-ativo { pointer-events: all; cursor: pointer; }
+
+    .hlp-card {
+      position: fixed; z-index: 99993;
+      background: #fff; border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.2);
+      width: 300px;
+      font-family: 'DM Sans', system-ui, sans-serif;
+      transition: left .3s cubic-bezier(.4,0,.2,1), top .3s cubic-bezier(.4,0,.2,1);
+    }
+    .hlp-card-header {
+      border-radius: 12px 12px 0 0; padding: 12px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .hlp-card-header.modo-tour    { background: #1e3a5f; }
+    .hlp-card-header.modo-pratica { background: #7c3aed; }
+    .hlp-card-step {
+      font-size: 10px; font-weight: 600; letter-spacing: .08em;
+      text-transform: uppercase; color: rgba(255,255,255,.55);
+    }
+    .hlp-card-title { font-size: 14px; font-weight: 600; color: #fff; margin-top: 2px; }
+    .hlp-card-close {
+      background: rgba(255,255,255,.12); border: none; color: #fff;
+      width: 24px; height: 24px; border-radius: 50%; cursor: pointer;
+      font-size: 12px; display: flex; align-items: center; justify-content: center;
+      transition: background .15s; flex-shrink: 0;
+    }
+    .hlp-card-close:hover { background: rgba(255,255,255,.22); }
+    .hlp-card-body { padding: 14px 16px; font-size: 13px; line-height: 1.6; color: #374151; }
+    .hlp-card-body .hlp-tip {
+      margin-top: 8px; padding: 8px 10px;
+      background: #eff6ff; border-radius: 6px;
+      font-size: 12px; color: #1d4ed8; border-left: 3px solid #93c5fd;
+    }
+    .hlp-card-footer {
+      padding: 10px 16px 14px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .hlp-dots { display: flex; gap: 5px; align-items: center; }
+    .hlp-dot { width: 6px; height: 6px; border-radius: 50%; background: #e5e7eb; transition: background .2s, width .2s; }
+    .hlp-dot.active-tour    { background: #1e3a5f; width: 14px; border-radius: 3px; }
+    .hlp-dot.active-pratica { background: #7c3aed; width: 14px; border-radius: 3px; }
+    .hlp-btns { display: flex; gap: 6px; }
+    .hlp-btn-nav {
+      padding: 6px 14px; border-radius: 6px;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      border: none; font-family: inherit; transition: all .15s;
+    }
+    .hlp-btn-nav.secondary { background: #f1f5f9; color: #374151; }
+    .hlp-btn-nav.secondary:hover { background: #e2e8f0; }
+    .hlp-btn-nav.tour    { background: #1e3a5f; color: #fff; }
+    .hlp-btn-nav.tour:hover    { background: #2d5282; }
+    .hlp-btn-nav.pratica { background: #7c3aed; color: #fff; }
+    .hlp-btn-nav.pratica:hover { background: #6d28d9; }
+
+    .hlp-pratica-hint {
+      position: fixed; z-index: 99994;
+      background: #7c3aed; color: #fff;
+      font-size: 12px; font-weight: 700;
+      padding: 6px 14px; border-radius: 20px;
+      display: flex; align-items: center; gap: 6px;
+      box-shadow: 0 3px 12px rgba(124,58,237,.4);
+      pointer-events: none;
+      animation: hlp-bounce 1s ease-in-out infinite;
+      white-space: nowrap;
+    }
+    @keyframes hlp-bounce {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-5px); }
+    }
+
+    .hlp-success-flash {
+      position: fixed; inset: 0; z-index: 99999;
+      background: rgba(22,163,74,.18);
+      pointer-events: none;
+      animation: hlp-flash .5s ease-out forwards;
+    }
+    @keyframes hlp-flash { 0% { opacity:1; } 100% { opacity:0; } }
+
+    @keyframes hlp-shake {
+      0%,100% { transform: translateX(0); }
+      20%      { transform: translateX(-8px); }
+      40%      { transform: translateX(8px); }
+      60%      { transform: translateX(-5px); }
+      80%      { transform: translateX(5px); }
+    }
+    .hlp-card.shake { animation: hlp-shake .35s ease; }
+
+    .hlp-highlight {
+      outline: 3px solid #3b82f6 !important;
+      outline-offset: 3px !important;
+      border-radius: 6px;
+      animation: hlp-pulse 1.4s infinite;
+    }
+    .hlp-highlight.pratica {
+      outline-color: #7c3aed !important;
+      animation: hlp-pulse-pratica 1s infinite;
+    }
+    @keyframes hlp-pulse {
+      0%,100% { outline-color: #3b82f6; }
+      50%      { outline-color: #93c5fd; }
+    }
+    @keyframes hlp-pulse-pratica {
+      0%,100% { outline-color: #7c3aed; box-shadow: 0 0 0 0 rgba(124,58,237,.4); }
+      50%      { outline-color: #a78bfa; box-shadow: 0 0 0 6px rgba(124,58,237,0); }
+    }
+
+    .hlp-fab-group {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+      display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+    }
+    .hlp-fab {
+      display: flex; align-items: center; gap: 8px;
+      border: none; border-radius: 50px; cursor: pointer;
+      padding: 9px 16px 9px 13px;
+      font-size: 13px; font-weight: 600; font-family: inherit;
+      box-shadow: 0 4px 16px rgba(0,0,0,.2);
+      transition: all .2s; white-space: nowrap; color: #fff;
+    }
+    .hlp-fab:hover { transform: translateY(-1px); }
+    .hlp-fab.tour    { background: #1e3a5f; }
+    .hlp-fab.tour:hover    { background: #2d5282; box-shadow: 0 6px 20px rgba(30,58,95,.4); }
+    .hlp-fab.pratica { background: #7c3aed; }
+    .hlp-fab.pratica:hover { background: #6d28d9; box-shadow: 0 6px 20px rgba(124,58,237,.4); }
+    .hlp-fab-icon { font-size: 15px; }
+  `;
+
+  const style = document.createElement('style');
+  style.textContent = css;
+  document.head.appendChild(style);
+
+  /* ═══════════════════════════════════════════════════════════
+     1. TOOLTIPS
+  ═══════════════════════════════════════════════════════════ */
+
+  let activeTooltip = null;
+
+  function criarTooltip(texto) {
+    const t = document.createElement('div');
+    t.className = 'hlp-tooltip';
+    t.textContent = texto;
+    document.body.appendChild(t);
+    return t;
+  }
+
+  function posicionarTooltip(tooltip, btn) {
+    const r = btn.getBoundingClientRect();
+    const gap = 8;
+    tooltip.style.left = r.left + 'px';
+    if (r.bottom + gap + tooltip.offsetHeight < window.innerHeight - 16) {
+      tooltip.style.top = (r.bottom + gap) + 'px';
+      tooltip.classList.add('arrow-top'); tooltip.classList.remove('arrow-bottom');
+    } else {
+      tooltip.style.top = (r.top - tooltip.offsetHeight - gap) + 'px';
+      tooltip.classList.add('arrow-bottom'); tooltip.classList.remove('arrow-top');
+    }
+  }
+
+  function mostrarTooltip(btn, texto) {
+    fecharTooltip();
+    const t = criarTooltip(texto);
+    requestAnimationFrame(function () { posicionarTooltip(t, btn); t.classList.add('visible'); });
+    activeTooltip = t;
+  }
+
+  function fecharTooltip() {
+    if (activeTooltip) { activeTooltip.remove(); activeTooltip = null; }
+  }
+
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.hlp-btn') && !e.target.closest('.hlp-tooltip')) fecharTooltip();
+  });
+
+  const observer = new MutationObserver(function () {
+    document.querySelectorAll('[data-help]:not([data-hlp-done])').forEach(injetarBotaoHelp);
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  function injetarBotaoHelp(el) {
+    el.setAttribute('data-hlp-done', '1');
+    const texto = el.getAttribute('data-help');
+    const btn = document.createElement('button');
+    btn.className = 'hlp-btn';
+    btn.title = 'Ajuda';
+    btn.textContent = '?';
+    btn.onclick = function (e) {
+      e.stopPropagation();
+      if (activeTooltip) { fecharTooltip(); return; }
+      mostrarTooltip(btn, texto);
+    };
+    el.parentNode && el.parentNode.insertBefore(btn, el.nextSibling);
+  }
+
+  document.querySelectorAll('[data-help]').forEach(injetarBotaoHelp);
+
+
+  /* ═══════════════════════════════════════════════════════════
+     2. TOUR GUIADO + MODO PRÁTICA
+     Tours com pratica:true exigem clique no elemento para avançar.
+     Nome do tour prática = nome-do-tour + '-pratica'
+  ═══════════════════════════════════════════════════════════ */
+
+  const HelpTour = {
+
+    tours: {
+
+'pesquisa-precos': [
+  {
+    selector: null,
+    title: '🎓 Tour · Pesquisa de Preços',
+    text: 'Este tour guia você pelo fluxo completo: buscar contratações similares no PNCP, selecionar amostras, salvar e gerar a planilha.',
+    tip: '⏱ Duração: ~3 minutos'
+  },
+  {
+    selector: '#mpp-itens',
+    title: 'Tabela de itens',
+    text: 'Cada linha é um item do processo. O status mostra o andamento: ✅ Concluído, 📋 Rascunho ou ⬜ Não iniciado.',
+    tip: 'O progresso é salvo automaticamente — feche e retome quando quiser.'
+  },
+  {
+    selector: '#chk-pp-all-excluir',
+    title: 'Selecionar todos',
+    text: 'Marca todos os itens de uma vez. Quando há itens marcados, o botão "Excluir selecionados" aparece na barra superior.'
+  },
+  {
+    selector: null,
+    title: 'Pesquisar um item',
+    text: 'Clique em 🔍 Pesquisar (ou ✏️ Editar) na linha de qualquer item. O sistema buscará contratações similares no PNCP usando o CATMAT do item.',
+    tip: '⏳ O tour vai pausar aqui e avançar automaticamente quando a tela de resultados carregar.',
+    waitFor: '#pp-passo2'
+  },
+  {
+    selector: '#pp-curadoria-container',
+    title: 'Contratações similares',
+    text: 'Cada linha é uma contratação encontrada no PNCP com órgão, descrição, quantidade, preço unitário e data. As contratações do rascunho anterior ficam pré-marcadas.'
+  },
+  {
+    selector: '[id^="pp-chk-all-rasc-"]',
+    title: 'Seleção de amostras',
+    text: 'Use os checkboxes para marcar as contratações que comporão a pesquisa de preços. O checkbox do cabeçalho marca ou desmarca todas de uma seção.'
+  },
+  {
+    selector: '[id^="pp-stats-"]',
+    title: 'Estatísticas ao vivo',
+    text: 'Conforme você marca ou desmarca contratações, esta barra mostra a média, mínimo e máximo dos preços selecionados — em tempo real.'
+  },
+  {
+    selector: '[id^="pp-man-forn-"]',
+    title: 'Cotação manual',
+    text: 'Quando um fornecedor enviou proposta por e-mail ou outro meio, você pode adicionar a cotação manualmente aqui. Ela será incluída na planilha final.'
+  },
+  {
+    selector: '#pp-btn-salvar',
+    title: 'Salvar rascunho',
+    text: 'Salva as amostras selecionadas sem finalizar o item. Ele fica com status 📋 Rascunho e você pode continuar depois.'
+  },
+  {
+    selector: '#pp-btn-acao',
+    title: 'Concluir item',
+    text: 'Marca o item como concluído. Você ainda pode reabrir para editar clicando em ✏️ Editar. Quando TODOS os itens estiverem concluídos, este botão vira "📊 Gerar planilha".',
+    tip: 'A planilha só é liberada com 100% dos itens concluídos.'
+  },
+  {
+    selector: null,
+    title: 'Tela de Propostas',
+    text: 'Após concluir um item, o botão 📋 Propostas aparece na tabela. Ele abre a tela de confirmação com os links do Compras.gov (🛒 Item) e da proposta do fornecedor (📋 Proposta) para cada contratação selecionada.',
+    tip: 'É possível remover contratações desta lista clicando no ✕ antes de finalizar.'
+  },
+  {
+    selector: null,
+    title: 'Tour concluído! 🎉',
+    text: 'Você conhece o fluxo completo. Agora experimente o 🎯 Praticar para interagir com cada etapa.',
+    tip: '💡 Os botões ? nos campos mostram dicas rápidas a qualquer momento.'
+  }
+],
+
+'pesquisa-precos-pratica': [
+  {
+    selector: null,
+    title: '🎯 Modo Prática · Pesquisa de Preços',
+    text: 'Vamos interagir com o app! Alguns passos pedem que você clique num elemento. Outros vão pausar e esperar você executar uma ação real no sistema.',
+    tip: '💜 Elementos do modo prática pulsam em roxo.'
+  },
+  {
+    selector: '#mpp-itens',
+    title: 'Tabela de itens',
+    text: 'Esta área lista todos os itens do processo com status e ações.',
+    pratica: true,
+    acao: '👆 Clique na tabela de itens para continuar'
+  },
+  {
+    selector: '#chk-pp-all-excluir',
+    title: 'Selecionar todos',
+    text: 'Este checkbox marca ou desmarca todos os itens da tabela.',
+    pratica: true,
+    acao: '👆 Clique no checkbox "selecionar todos"'
+  },
+  {
+    selector: null,
+    title: 'Abrir a pesquisa de um item',
+    text: 'Agora clique em 🔍 Pesquisar (ou ✏️ Editar) em qualquer item da tabela. O tour vai pausar e avançar automaticamente quando a tela de contratações carregar.',
+    tip: '⏳ Aguardando você clicar em Pesquisar...',
+    waitFor: '#pp-passo2'
+  },
+  {
+    selector: '#pp-curadoria-container',
+    title: 'Contratações encontradas!',
+    text: 'O sistema buscou contratações similares no PNCP. Cada linha tem órgão, descrição, preço e links para consulta.',
+    pratica: true,
+    acao: '👆 Clique na tabela de contratações para continuar'
+  },
+  {
+    selector: '[id^="pp-chk-all-rasc-"]',
+    title: 'Marque as amostras',
+    text: 'Use este checkbox para selecionar ou desmarcar todas as contratações da seção.',
+    pratica: true,
+    acao: '👆 Clique no checkbox de seleção'
+  },
+  {
+    selector: '[id^="pp-stats-"]',
+    title: 'Estatísticas ao vivo',
+    text: 'Aqui aparecem a média, mínimo e máximo dos preços marcados.',
+    pratica: true,
+    acao: '👆 Clique na barra de estatísticas'
+  },
+  {
+    selector: '#pp-btn-salvar',
+    title: 'Salvar rascunho',
+    text: 'Salva o progresso sem finalizar. O item fica como 📋 Rascunho.',
+    pratica: true,
+    acao: '👆 Clique em "Salvar rascunho"'
+  },
+  {
+    selector: '#pp-btn-acao',
+    title: 'Concluir item',
+    text: 'Finaliza o item. Com todos concluídos, vira "Gerar planilha".',
+    pratica: true,
+    acao: '👆 Clique em "Concluir item"'
+  },
+  {
+    selector: null,
+    title: '✅ Prática concluída!',
+    text: 'Você percorreu o fluxo completo da pesquisa de preços. Lembre: após concluir todos os itens, o botão 📋 Propostas aparece em cada linha para revisar os links antes de gerar a planilha.',
+    tip: '🏆 Use os botões ? sempre que tiver dúvida em algum campo.'
+  }
+],// ── Tour: Novo Processo ──────────────────────────────────────
+'novo-processo': [
+  {
+    selector: null,
+    title: '🎓 Tour · Novo Processo',
+    text: 'Este tour explica como cadastrar um novo processo de compra. Você pode preencher os campos manualmente ou importar um TR Técnico em PDF.',
+    tip: '⏱ Duração: ~2 minutos'
+  },
+  {
+    selector: '#btn-ler-tr-novo',
+    title: 'Importar TR Técnico (PDF)',
+    text: 'Se você tiver o Termo de Referência em PDF, clique aqui. O sistema extrai automaticamente o objeto, unidade e itens do documento.',
+    tip: 'Economiza tempo e reduz erros de digitação.'
+  },
+  {
+    selector: '#n-proc',
+    title: 'Número do Processo',
+    text: 'Informe o número oficial do processo administrativo. Ex: 01-P-2646/2026. Campo obrigatório.'
+  },
+  {
+    selector: '#np-tipo',
+    title: 'Tipo de Contratação',
+    text: '"Aquisição de Material" é uma compra direta. "Registro de Preços (SRP)" cria uma ATA com validade de até 12 meses para compras parceladas.'
+  },
+  {
+    selector: '#n-int',
+    title: 'Interessado / Unidade',
+    text: 'Unidade solicitante do processo. Será usada para identificar a pasta no Drive e nos relatórios gerados.'
+  },
+  {
+    selector: '#n-obj',
+    title: 'Objeto / Assunto',
+    text: 'Descrição completa do que está sendo contratado. Essa informação aparece no checklist e nos documentos gerados automaticamente.'
+  },
+  {
+    selector: '#n-res',
+    title: 'Resumo para a pasta',
+    text: 'Versão curta do objeto. A pasta no Google Drive será criada com o nome: (nº processo) — (resumo).',
+    tip: 'Ex: "RP de Eletrodo Descartável" → pasta "01-P-2646/2026 - RP de Eletrodo Descartável"'
+  },
+  {
+    selector: null,
+    title: 'Tudo pronto! 🎉',
+    text: 'Clique em "📂 Criar processo" para criar a pasta no Drive e registrar o processo no sistema.',
+    tip: '💡 Use o 🎯 Praticar para testar clicando em cada campo.'
+  }
+],
+
+'novo-processo-pratica': [
+  {
+    selector: null,
+    title: '🎯 Modo Prática · Novo Processo',
+    text: 'Vamos praticar! Cada passo pede que você clique em um campo ou botão. O "Próximo" fica bloqueado até você acertar.',
+    tip: '💜 Elementos do modo prática pulsam em roxo.'
+  },
+  {
+    selector: '#btn-ler-tr-novo',
+    title: 'Importar o TR Técnico',
+    text: 'Quando você tiver o PDF do TR, começa por aqui.',
+    pratica: true,
+    acao: '👆 Clique no botão "Selecionar PDF do TR Técnico"'
+  },
+  {
+    selector: '#n-proc',
+    title: 'Número do Processo',
+    text: 'Campo obrigatório. Informe o número oficial do processo.',
+    pratica: true,
+    acao: '👆 Clique no campo "Número do Processo"'
+  },
+  {
+    selector: '#np-tipo',
+    title: 'Tipo de Contratação',
+    text: 'Escolha entre Aquisição de Material ou Registro de Preços.',
+    pratica: true,
+    acao: '👆 Clique no campo "Tipo de Contratação"'
+  },
+  {
+    selector: '#n-int',
+    title: 'Interessado / Unidade',
+    text: 'Informe a unidade solicitante.',
+    pratica: true,
+    acao: '👆 Clique no campo "Interessado / Unidade"'
+  },
+  {
+    selector: '#n-obj',
+    title: 'Objeto / Assunto',
+    text: 'Descreva o que está sendo contratado.',
+    pratica: true,
+    acao: '👆 Clique no campo "Objeto / Assunto"'
+  },
+  {
+    selector: '#n-res',
+    title: 'Resumo para a pasta',
+    text: 'Nome curto que será usado no Drive.',
+    pratica: true,
+    acao: '👆 Clique no campo "Resumo para nome da pasta"'
+  },
+  {
+    selector: null,
+    title: '✅ Prática concluída!',
+    text: 'Você localizou todos os campos. Agora é só preencher e clicar em "📂 Criar processo".',
+    tip: '🏆 Os botões ? ao lado de cada campo mostram dicas rápidas.'
+  }
+],
+'renovar-ata': [
+  {
+    selector: null,
+    title: '🎓 Tour · Renovar ATA',
+    text: 'Este tour explica como criar um processo de renovação de Ata de Registro de Preços. Você pode importar o PDF da ATA original ou preencher os dados manualmente.',
+    tip: '⏱ Duração: ~2 minutos'
+  },
+  {
+    selector: '#rata-pdf-input',
+    title: 'Importar PDF da ATA (opcional)',
+    text: 'Faça upload do PDF da ATA vigente. O sistema extrai automaticamente o Objeto e os itens com CATMAT, poupando digitação.',
+    tip: 'Se não tiver o PDF, pule esta etapa e preencha manualmente.'
+  },
+  {
+    selector: '#rata-proc',
+    title: 'Nº do Processo (Dossiê)',
+    text: 'Informe o número do novo processo administrativo que formalizará a renovação. Campo obrigatório.'
+  },
+  {
+    selector: '#rata-int',
+    title: 'Interessado',
+    text: 'Unidade solicitante da renovação. Ex: HC-Unicamp. Será usada para organizar a pasta no Drive.'
+  },
+  {
+    selector: '#rata-obj',
+    title: 'Objeto / Assunto',
+    text: 'Descreva o objeto da ATA que está sendo renovada. Se importou o PDF, este campo pode já estar preenchido automaticamente.'
+  },
+  {
+    selector: '#rata-comp',
+    title: 'Comprador',
+    text: 'Nome do comprador responsável. Preenchido automaticamente com o comprador logado, mas pode ser alterado.'
+  },
+  {
+    selector: '#rata-res',
+    title: 'Resumo para a pasta',
+    text: 'Nome curto para identificar a pasta no Drive. Ex: "Renovação ATA 530 - Dialisadores".',
+    tip: 'A pasta será criada como: (nº processo) - (resumo)'
+  },
+  {
+    selector: '#rata-itens-lista',
+    title: 'Itens para pesquisa de preços',
+    text: 'Lista dos itens que serão pesquisados. Se importou o PDF, os itens com CATMAT já aparecem aqui. Você pode editar as descrições ou adicionar itens manualmente.',
+    tip: 'É obrigatório ter ao menos um item para criar a renovação.'
+  },
+  {
+    selector: null,
+    title: 'Tudo pronto! 🎉',
+    text: 'Clique em "🔄 Criar Renovação" para gerar a pasta no Drive e iniciar o processo. Os itens já ficam prontos para a Pesquisa de Preços.',
+    tip: '💡 Após criado, o processo aparece na lista principal e você pode abrir a Pesquisa de Preços direto pelo card.'
+  }
+],
+
+'renovar-ata-pratica': [
+  {
+    selector: null,
+    title: '🎯 Modo Prática · Renovar ATA',
+    text: 'Vamos praticar o fluxo de renovação! Cada passo pede que você clique em um campo. O "Próximo" fica bloqueado até você acertar.',
+    tip: '💜 Elementos do modo prática pulsam em roxo.'
+  },
+  {
+    selector: '#rata-proc',
+    title: 'Nº do Processo',
+    text: 'Primeiro campo a preencher — o número do novo processo.',
+    pratica: true,
+    acao: '👆 Clique no campo "Nº Processo (Dossiê)"'
+  },
+  {
+    selector: '#rata-int',
+    title: 'Interessado',
+    text: 'Unidade que está solicitando a renovação.',
+    pratica: true,
+    acao: '👆 Clique no campo "Interessado"'
+  },
+  {
+    selector: '#rata-obj',
+    title: 'Objeto / Assunto',
+    text: 'Descrição do que está sendo renovado.',
+    pratica: true,
+    acao: '👆 Clique no campo "Objeto / Assunto"'
+  },
+  {
+    selector: '#rata-comp',
+    title: 'Comprador',
+    text: 'Responsável pelo processo.',
+    pratica: true,
+    acao: '👆 Clique no campo "Comprador"'
+  },
+  {
+    selector: '#rata-res',
+    title: 'Resumo para a pasta',
+    text: 'Nome curto que será usado no Drive.',
+    pratica: true,
+    acao: '👆 Clique no campo "Resumo para nome da pasta"'
+  },
+  {
+    selector: '#rata-item-catmat',
+    title: 'Adicionar item manualmente',
+    text: 'Quando não há PDF, os itens são adicionados por aqui. O CATMAT é obrigatório.',
+    pratica: true,
+    acao: '👆 Clique no campo "CATMAT"'
+  },
+  {
+    selector: null,
+    title: '✅ Prática concluída!',
+    text: 'Você conhece todos os campos da renovação. Agora é só preencher e clicar em "🔄 Criar Renovação".',
+    tip: '🏆 Lembre: com o PDF da ATA o preenchimento é automático!'
+  }
+],
+      // Adicione futuros tours aqui:
+      // 'gestao-processos': [ ... ],
+      // 'gestao-processos-pratica': [ ... ]
+    },
+
+    _current:         null,
+    _nomeTour:        '',
+    _praticaMode:     false,
+    _step:            0,
+    _overlay:         null,
+    _spotlight:       null,
+    _card:            null,
+    _hint:            null,
+    _highlighted:     null,
+    _praticaListener: null,
+    _waitForInterval: null,
+
+    start: function (nome) {
+      const steps = this.tours[nome];
+      if (!steps || !steps.length) { console.warn('HelpTour: "' + nome + '" não encontrado.'); return; }
+      this._nomeTour    = nome;
+      this._praticaMode = nome.endsWith('-pratica');
+      this._current     = steps;
+      this._step        = 0;
+      this._montar();
+      this._renderStep();
+    },
+
+    _montar: function () {
+      this._desmontar();
+      const self = this;
+
+      this._overlay = document.createElement('div');
+      this._overlay.className = 'hlp-overlay-mask';
+      this._overlay.addEventListener('click', function () {
+        if (self._praticaMode && self._current && self._current[self._step].pratica) self._errou();
+      });
+
+      this._spotlight = document.createElement('div');
+      this._spotlight.className = 'hlp-spotlight';
+
+      this._card = document.createElement('div');
+      this._card.className = 'hlp-card';
+
+      this._hint = document.createElement('div');
+      this._hint.className = 'hlp-pratica-hint';
+      this._hint.style.display = 'none';
+
+      document.body.appendChild(this._overlay);
+      document.body.appendChild(this._spotlight);
+      document.body.appendChild(this._card);
+      document.body.appendChild(this._hint);
+    },
+
+    _desmontar: function () {
+      this._pararWaitFor();   
+      this._limparPraticaListener();
+      if (this._highlighted) {
+        this._highlighted.classList.remove('hlp-highlight', 'pratica');
+        this._highlighted = null;
+      }
+      [this._overlay, this._spotlight, this._card, this._hint].forEach(function (el) {
+        if (el && el.parentNode) el.parentNode.removeChild(el);
+      });
+      this._overlay = this._spotlight = this._card = this._hint = null;
+    },
+
+    _limparPraticaListener: function () {
+      if (this._praticaListener && this._highlighted) {
+        this._highlighted.removeEventListener('click', this._praticaListener);
+      }
+      this._praticaListener = null;
+      if (this._spotlight) {
+        this._spotlight.onclick = null;
+        this._spotlight.classList.remove('pratica-ativo');
+      }
+    },
+
+    _renderStep: function () {
+      const self    = this;
+      const step    = this._current[this._step];
+      const total   = this._current.length;
+      const isFirst = this._step === 0;
+      const isLast  = this._step === total - 1;
+      const isPratica   = this._praticaMode && !!step.pratica;
+      const modoClass   = this._praticaMode ? 'modo-pratica' : 'modo-tour';
+      const dotClass    = this._praticaMode ? 'active-pratica' : 'active-tour';
+      const btnClass    = this._praticaMode ? 'pratica' : 'tour';
+
+      this._limparPraticaListener();
+      if (this._highlighted) {
+        this._highlighted.classList.remove('hlp-highlight', 'pratica');
+        this._highlighted = null;
+      }
+      this._hint.style.display = 'none';
+
+      if (step.selector) {
+        const el = document.querySelector(step.selector);
+        if (el) {
+          this._overlay.style.pointerEvents = 'all';
+          el.classList.add('hlp-highlight');
+          if (isPratica) el.classList.add('pratica');
+          this._highlighted = el;
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+          setTimeout(function () {
+            const r = el.getBoundingClientRect();
+            const pad = 10;
+            self._spotlight.style.cssText =
+              'left:' + (r.left-pad) + 'px;top:' + (r.top-pad) + 'px;' +
+              'width:' + (r.width+pad*2) + 'px;height:' + (r.height+pad*2) + 'px;display:;';
+            self._posicionarCard(el);
+
+            if (isPratica) {
+              self._spotlight.classList.add('pratica-ativo');
+              self._spotlight.onclick = function () { self._acertou(); };
+
+              self._hint.textContent = step.acao || '👆 Clique no elemento destacado';
+              self._hint.style.cssText =
+                'display:flex;left:' + (r.left-pad) + 'px;top:' + (r.bottom+pad+10) + 'px;';
+
+              self._praticaListener = function (e) { e.stopPropagation(); self._acertou(); };
+              el.addEventListener('click', self._praticaListener);
+            }
+          }, 200);
+        } else {
+          this._spotlight.style.display = 'none';
+          this._posicionarCardCentro();
+        }
+     } else {
+  this._spotlight.style.display = 'none';
+  this._posicionarCardCentro();
+  // Se é passo de waitFor, libera cliques no overlay
+  if (step.waitFor) {
+    this._overlay.style.pointerEvents = 'none';
+  } else {
+    this._overlay.style.pointerEvents = 'all';
+  }
+}
+
+      this._card.innerHTML =
+        '<div class="hlp-card-header ' + modoClass + '">' +
+          '<div>' +
+            '<div class="hlp-card-step">' + (this._praticaMode ? '🎯 Prática' : '🎓 Tour') +
+              ' · Passo ' + (this._step+1) + ' de ' + total + '</div>' +
+            '<div class="hlp-card-title">' + step.title + '</div>' +
+          '</div>' +
+          '<button class="hlp-card-close" id="hlp-close">✕</button>' +
+        '</div>' +
+        '<div class="hlp-card-body">' +
+          step.text +
+          (step.tip ? '<div class="hlp-tip">' + step.tip + '</div>' : '') +
+          (isPratica
+            ? '<div style="margin-top:10px;padding:9px 12px;background:#f5f3ff;border-radius:8px;' +
+              'font-size:12px;color:#6d28d9;border-left:3px solid #a78bfa;font-weight:600;">' +
+              (step.acao || '👆 Clique no elemento destacado para avançar') + '</div>'
+            : '') +
+        '</div>' +
+        '<div class="hlp-card-footer">' +
+          '<div class="hlp-dots">' +
+            this._current.map(function (_, i) {
+              return '<div class="hlp-dot ' + (i === self._step ? dotClass : '') + '"></div>';
+            }).join('') +
+          '</div>' +
+          '<div class="hlp-btns">' +
+            (!isFirst && !isPratica
+              ? '<button class="hlp-btn-nav secondary" id="hlp-prev">← Anterior</button>'
+              : '') +
+            '<button class="hlp-btn-nav ' + btnClass + '" id="hlp-next"' +
+              (isPratica ? ' disabled style="opacity:.35;cursor:not-allowed;"' : '') + '>' +
+              (isLast ? 'Concluir ✓' : (isPratica ? '🔒 Clique no elemento' : 'Próximo →')) +
+            '</button>' +
+          '</div>' +
+        '</div>';
+
+      document.getElementById('hlp-close').onclick = function () { self.end(); };
+      if (!isPratica) {
+        document.getElementById('hlp-next').onclick = function () {
+          isLast ? self.end() : self.proximo();
+        };
+      }
+      this._pararWaitFor();
+if (step.waitFor) {
+  this._iniciarWaitFor(step.waitFor);
+}
+      const prevBtn = document.getElementById('hlp-prev');
+      if (prevBtn) prevBtn.onclick = function () { self.anterior(); };
+    },
+
+    _acertou: function () {
+      const flash = document.createElement('div');
+      flash.className = 'hlp-success-flash';
+      document.body.appendChild(flash);
+      setTimeout(function () { if (flash.parentNode) flash.parentNode.removeChild(flash); }, 500);
+      this.proximo();
+    },
+_iniciarWaitFor: function (selector) {
+  const self = this;
+  this._pararWaitFor();
+  this._waitForInterval = setInterval(function () {
+    const el = document.querySelector(selector);
+    const visivel = el && window.getComputedStyle(el).display !== 'none' && el.offsetParent !== null;
+    if (visivel) {
+      self._pararWaitFor();
+      self.proximo();
+    }
+  }, 400);
+},
+
+_pararWaitFor: function () {
+  if (this._waitForInterval) {
+    clearInterval(this._waitForInterval);
+    this._waitForInterval = null;
+  }
+},
+    _errou: function () {
+      if (!this._card) return;
+      this._card.classList.remove('shake');
+      void this._card.offsetWidth;
+      this._card.classList.add('shake');
+    },
+
+    _posicionarCard: function (el) {
+      const r = el.getBoundingClientRect();
+      const cW = 300, cH = this._card.offsetHeight || 220;
+      const vW = window.innerWidth, vH = window.innerHeight;
+      let left, top;
+      if (r.right + cW + 24 < vW)        { left = r.right + 16; top = Math.max(16, Math.min(r.top, vH-cH-16)); }
+      else if (r.left - cW - 16 > 0)     { left = r.left - cW - 16; top = Math.max(16, Math.min(r.top, vH-cH-16)); }
+      else if (r.bottom + cH + 16 < vH)  { left = Math.max(16, Math.min(r.left, vW-cW-16)); top = r.bottom + 16; }
+      else                                { left = Math.max(16, Math.min(r.left, vW-cW-16)); top = Math.max(16, r.top-cH-16); }
+      this._card.style.left = left + 'px';
+      this._card.style.top  = top  + 'px';
+    },
+
+    _posicionarCardCentro: function () {
+      this._card.style.left      = '50%';
+      this._card.style.top       = '50%';
+      this._card.style.transform = 'translate(-50%,-50%)';
+    },
+
+    proximo: function () {
+      if (this._step < this._current.length - 1) {
+        this._card.style.transform = '';
+        this._step++;
+        this._renderStep();
+      }
+    },
+
+    anterior: function () {
+      if (this._step > 0) {
+        this._card.style.transform = '';
+        this._step--;
+        this._renderStep();
+      }
+    },
+
+    end: function () {
+      this._desmontar();
+      this._current = null; this._nomeTour = ''; this._praticaMode = false; this._step = 0;
+    }
+  };
+
+  window.HelpTour = HelpTour;
+
+
+  /* ═══════════════════════════════════════════════════════════
+     3. FAB — Tour e Praticar
+  ═══════════════════════════════════════════════════════════ */
+
+  const HelpFab = {
+    _group: null,
+    _nomeTour: 'pesquisa-precos',
+
+    init: function () {
+      const group = document.createElement('div');
+      group.className = 'hlp-fab-group';
+      group.id = 'hlp-fab-group';
+      group.style.display = 'none';
+
+      const fabPratica = document.createElement('button');
+      fabPratica.className = 'hlp-fab pratica';
+      fabPratica.innerHTML = '<span class="hlp-fab-icon">🎯</span> Praticar';
+      fabPratica.onclick = function () { HelpTour.start(HelpFab._nomeTour + '-pratica'); };
+
+      const fabTour = document.createElement('button');
+      fabTour.className = 'hlp-fab tour';
+      fabTour.innerHTML = '<span class="hlp-fab-icon">🎓</span> Iniciar tour';
+      fabTour.onclick = function () { HelpTour.start(HelpFab._nomeTour); };
+
+      group.appendChild(fabPratica);
+      group.appendChild(fabTour);
+      document.body.appendChild(group);
+      this._group = group;
+    },
+
+    mostrar: function (nomeTour) {
+      if (!this._group) return;
+      this._nomeTour = nomeTour || 'pesquisa-precos';
+      this._group.style.display = '';
+    },
+
+    esconder: function () {
+      if (!this._group) return;
+      this._group.style.display = 'none';
+    }
+  };
+
+  HelpFab.init();
+  window.HelpFab = HelpFab;
+
+  /* ─── Detecta abertura/fechamento via classe 'v' ── */
+const modalObserver = new MutationObserver(function () {
+  const ovPP    = document.getElementById('ov-pp');
+  const ovNovo  = document.getElementById('ov-novo');
+  const ovRenov = document.getElementById('ov-renovar-ata');
+
+  if (ovPP && ovPP.classList.contains('v')) {
+    HelpFab.mostrar('pesquisa-precos');
+  } else if (ovNovo && ovNovo.classList.contains('v')) {
+    HelpFab.mostrar('novo-processo');
+  } else if (ovRenov && ovRenov.classList.contains('v')) {
+    HelpFab.mostrar('renovar-ata');
+  } else {
+    HelpFab.esconder();
+    if (HelpTour._current) HelpTour.end();
+  }
+});
+modalObserver.observe(document.body, {
+  attributes: true, subtree: true,
+  attributeFilter: ['class']
+});
+})();
 </script>
 <div id="ov-doe" class="ov" style="display:none">
   <div class="modal">
