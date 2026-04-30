@@ -898,11 +898,16 @@ body{background:var(--gray1);color:var(--dark);font-family:'Segoe UI',sans-serif
       <!-- PASSO 2: Curadoria por CATMAT -->
       <div id="pp-passo2" style="display:none;">
         <div id="pp-curadoria-container"></div>
-        <div id="pp-preview-aviso-zero" style="display:none;">
-          <div class="aviso-box" style="margin-bottom:12px;">
-            ⚠️ Nenhum resultado encontrado. Verifique o CATMAT ou amplie o período.
-          </div>
-        </div>
+<div id="pp-preview-aviso-zero" style="display:none; text-align:center; padding:24px; color:var(--gray4);">
+  <div style="font-size:22px;margin-bottom:8px;">⚠️</div>
+  <div style="font-size:13px;font-weight:600;margin-bottom:4px;">
+    Nenhum resultado encontrado para este CATMAT.
+  </div>
+  <div style="font-size:12px;color:var(--gray4);">
+    Isso pode indicar que a API dos dados abertos está temporariamente indisponível.<br>
+    Aguarde alguns minutos e tente novamente.
+  </div>
+</div>
       </div>
 
       <!-- PASSO 3: Confirmação com links de proposta -->
@@ -1435,7 +1440,6 @@ function abrirModalRenovarAta() {
   _renderItensAta();
   abrirOv('ov-renovar-ata');
 }
-
 function _renderItensAta() {
   const lista = document.getElementById('rata-itens-lista');
   if (!lista) return;
@@ -1446,12 +1450,18 @@ function _renderItensAta() {
   lista.innerHTML = _ataItens.map(function(it, i) {
     return `<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;
                         background:var(--gray1);border-radius:6px;font-size:12px;">
-      <span style="font-family:monospace;min-width:28px;color:var(--gray4);">${it.item}</span>
+      <input value="${it.item || ''}" placeholder="Nº"
+        onchange="_ataItens[${i}].item = this.value"
+        style="width:36px;padding:4px 6px;border:1px solid var(--border);border-radius:4px;
+               font-size:11px;font-family:monospace;background:#fff;text-align:center;"/>
       <input value="${it.descricao || ''}" placeholder="Descrição do item"
-        onchange="_atualizarDescAta(${i}, this.value)"
+        onchange="_ataItens[${i}].descricao = this.value"
         style="flex:1;padding:4px 6px;border:1px solid var(--border);border-radius:4px;
                font-size:11px;font-family:inherit;background:#fff;"/>
-      <span style="font-family:monospace;font-size:11px;color:var(--gray4);white-space:nowrap;">${it.catmat}</span>
+      <input value="${it.catmat || ''}" placeholder="CATMAT"
+        onchange="_ataItens[${i}].catmat = this.value.replace(/\D/g,'')"
+        style="width:72px;padding:4px 6px;border:1px solid var(--border);border-radius:4px;
+               font-size:11px;font-family:monospace;background:#fff;text-align:center;"/>
       <button onclick="_removerItemAta(${i})"
         style="background:none;border:none;cursor:pointer;color:var(--red);font-size:13px;padding:0 4px;">✕</button>
     </div>`;
@@ -5856,6 +5866,455 @@ function _carregarPdfLib() {
     tip: '🏆 Lembre: com o PDF da ATA o preenchimento é automático!'
   }
 ],
+'fases-processo': [
+  {
+    selector: null,
+    title: '🎓 Tour · Fases do Processo',
+    text: 'Todo processo de compra é dividido em 3 fases. Este tour mostra o que cada fase contém e quais documentos e utilitários estão disponíveis em cada uma.',
+    tip: '⏱ Duração: ~3 minutos'
+  },
+  {
+    selector: '#tab1',
+    title: 'Fase 1 · Fase Preparatória (etapas 1–12)',
+    text: 'A fase mais longa. Cobre desde a pesquisa de preços até a geração do edital, termo de referência, contrato e despacho para a PG.',
+    tip: 'É aqui que a maior parte do trabalho de preparação acontece.',
+    aoEntrar: function () { trocarAba(1); }
+  },
+  {
+    selector: '.psec',
+    title: 'Seções da Fase Preparatória',
+    text: 'Os botões são agrupados por seção: Pesquisa de Preços, Edital e TR, Instrumento Contratual, Registro de Preços (SRP) e Despacho.',
+    aoEntrar: function () { trocarAba(1); }
+  },
+  {
+    selector: '[onclick="abrirPP()"]',
+    title: 'Pesquisa de Preços (CATMAT)',
+    text: 'Utilitário que busca contratações similares no portal dadosabertos.compras.gov.br usando o código CATMAT dos itens. Gera a planilha de pesquisa de preços ao final.',
+    tip: 'Obrigatório antes de abrir o processo licitatório.',
+    aoEntrar: function () { trocarAba(1); }
+  },
+  {
+    selector: '[onclick="abrirModalTRAdmin()"]',
+    title: 'Gerar TR Administrativo',
+    text: 'Gera o Termo de Referência Administrativo com as cláusulas de contratação, garantia, pagamento e forma de seleção.',
+    aoEntrar: function () { trocarAba(1); }
+  },
+  {
+    selector: '[onclick="abrirModalEdital()"]',
+    title: 'Gerar Edital',
+    text: 'Gera o edital do pregão com modo de disputa, participação e cláusulas. Deve ser gerado após o TR Técnico e Administrativo estarem aprovados.',
+    aoEntrar: function () { trocarAba(1); }
+  },
+  {
+    selector: '[onclick="abrirModalContrato()"]',
+    title: 'Gerar Contrato / AF',
+    text: 'Dependendo da contratação: Contrato (para escopo ou fornecimento contínuo) ou Autorização de Fornecimento (AF), que é o instrumento simplificado.',
+    aoEntrar: function () { trocarAba(1); }
+  },
+  {
+    selector: '[onclick="abrirModalDespachoPG()"]',
+    title: 'Despacho p/ PG',
+    text: 'Documento final da Fase Preparatória. Encaminha o processo para a Procuradoria Geral com os critérios do edital, justificativas e localização no SIGAD.',
+    aoEntrar: function () { trocarAba(1); }
+  },
+  {
+    selector: '#tab2',
+    title: 'Fase 2 · Recebimento PG + Divulgação (etapas 13–14)',
+    text: 'Após o retorno da PG, esta fase cuida da limpeza dos documentos, geração dos atos de designação, aviso de abertura e e-mails aos interessados.',
+    aoEntrar: function () { trocarAba(2); }
+  },
+  {
+    selector: '[onclick="abrirModalLimpar()"]',
+    title: 'Limpar Documento',
+    text: 'Remove automaticamente marcações de tachado e destaques coloridos do Edital ou TR após revisão da PG. Evita trabalho manual de limpeza.',
+    tip: 'Sempre limpe os documentos antes de publicar.',
+    aoEntrar: function () { trocarAba(2); }
+  },
+  {
+    selector: '[onclick="abrirModal144()"]',
+    title: 'Gerar Ato de Designação',
+    text: 'Designa o Pregoeiro e a Equipe de Apoio para conduzir o pregão eletrônico.',
+    aoEntrar: function () { trocarAba(2); }
+  },
+  {
+    selector: '[onclick="abrirModal148()"]',
+    title: 'Gerar Aviso de Abertura',
+    text: 'Gera o aviso oficial de abertura do pregão com número e datas. Usado para publicação no DOE-SP.',
+    aoEntrar: function () { trocarAba(2); }
+  },
+  {
+    selector: '[onclick="abrirModalDOE()"]',
+    title: 'Verificar Publicação DOE-SP',
+    text: 'Abre a busca no Diário Oficial do Estado com o número do pregão já formatado para colar. Facilita a verificação da publicação.',
+    aoEntrar: function () { trocarAba(2); }
+  },
+  {
+    selector: '#tab3',
+    title: 'Fase 3 · Homologação (etapas 15–17)',
+    text: 'Fase final. Cobre o preenchimento da tabela de homologação, geração do resultado, aviso de divulgação e comunicação à Divisão de Contratos.',
+    aoEntrar: function () { trocarAba(3); }
+  },
+  {
+    selector: '[onclick="abrirHom()"]',
+    title: 'Preencher Tabela de Homologação',
+    text: 'Registra o valor homologado e o fornecedor vencedor por item. É a base para gerar todos os documentos finais desta fase.',
+    tip: 'Preencha a tabela antes de gerar qualquer documento da Fase 3.',
+    aoEntrar: function () { trocarAba(3); }
+  },
+  {
+    selector: '[onclick="abrirModal172()"]',
+    title: 'Gerar Resultado Final',
+    text: 'Gera o documento de resultado com os vencedores da Tabela de Homologação para publicação.',
+    aoEntrar: function () { trocarAba(3); }
+  },
+  {
+    selector: '[onclick="abrirModal176()"]',
+    title: 'Despacho p/ Contratos',
+    text: 'Encaminha os itens e fornecedores da homologação para a Divisão de Contratos formalizar o instrumento contratual.',
+    aoEntrar: function () { trocarAba(3); }
+  },
+  {
+    selector: null,
+    title: 'Tour concluído! 🎉',
+    text: 'Você conhece as 3 fases e os principais documentos de cada uma. O app guia você pela sequência correta — siga a numeração das etapas (1–17) e use os botões ? para dicas rápidas.',
+    tip: '💡 Processos do tipo SRP têm uma seção extra na Fase 1: Ata de Registro de Preços e Nota de Empenho.',
+    aoEntrar: function () { trocarAba(1); }
+  }
+],
+'limpar-docs': [
+  {
+    selector: null,
+    title: '🎓 Tour · Limpar Documentos',
+    text: 'Este utilitário remove automaticamente texto tachado e destaques coloridos de documentos revisados pela PG. O original nunca é alterado — uma cópia limpa é criada na mesma pasta.',
+    tip: '⏱ Duração: ~1 minuto'
+  },
+  {
+    selector: null,
+    title: '⚠️ O documento precisa ser um Google Docs',
+    text: 'O utilitário só funciona com Google Docs. Se o seu arquivo for Word (.docx), abra o Google Drive, clique com o botão direito no arquivo → "Abrir com" → "Documentos Google". O arquivo será convertido automaticamente.',
+    tip: '💡 Após converter, copie o link da barra de endereço do navegador — é esse link que você vai colar aqui.'
+  },
+  {
+    selector: '#limpar-url',
+    title: 'Link do Google Docs',
+    text: 'Cole aqui o link completo do documento. Ele começa sempre com: https://docs.google.com/document/d/...',
+    tip: 'O documento precisa estar na Drive do comprador e com permissão de edição para a conta do sistema.'
+  },
+  {
+    selector: '#btn-limpar',
+    title: 'Botão Limpar',
+    text: 'Clique em "🧹 Limpar" para iniciar. O sistema acessa o documento, remove tachados e destaques, e cria uma cópia com o prefixo [LIMPO] na mesma pasta do original.'
+  },
+  {
+    selector: '#limpar-resultado',
+    title: 'Resultado da limpeza',
+    text: 'Quando concluído, aparecem dois links: "📄 Abrir cópia limpa" — o documento sem marcações, pronto para uso — e "📄 Abrir original" — o documento intacto, preservado para consulta.',
+    tip: 'Sempre confira a cópia limpa antes de usar — documentos muito formatados podem precisar de ajuste manual.'
+  },
+  {
+    selector: null,
+    title: 'Tour concluído! 🎉',
+    text: 'Simples assim: cole o link → clique em Limpar → abra a cópia limpa. Lembre que o arquivo precisa estar em formato Google Docs, não Word ou PDF.',
+    tip: '💡 Use este utilitário sempre que receber o documento de volta da PG com marcações de revisão.'
+  }
+],
+'modal-142': [
+  {
+    selector: null,
+    title: '📄 Informação para Instaurar Sessão',
+    text: 'Documento que formaliza o início do pregão. Registra o Parecer e Despacho da PG e define a numeração SIGAD dos próximos documentos.'
+  },
+  {
+    selector: '.mfsec',
+    title: 'Campos automáticos',
+    text: 'Processo, Objeto e Comprador são lidos automaticamente do Checklist. Você não precisa preencher — aparecem já preenchidos ao abrir o modal.'
+  },
+  {
+    selector: '#m142-npreg',
+    title: 'Nº do Pregão',
+    text: 'Número oficial do pregão eletrônico. Ex: 90088/2026. Será salvo no Checklist e reutilizado automaticamente nos próximos documentos (Ato de Designação, Aviso de Abertura, e-mails).'
+  },
+  {
+    selector: '#m142-parecer',
+    title: 'Parecer PG',
+    text: 'Número do Parecer emitido pela Procuradoria Geral. Ex: 475/2026. Consta no documento recebido da PG.'
+  },
+  {
+    selector: '#m142-despacho',
+    title: 'Despacho PG',
+    text: 'Número do Despacho emitido pela PG. Ex: 826/2026. Geralmente vem junto com o Parecer no mesmo documento.'
+  },
+  {
+    selector: '#m142-sigad',
+    title: 'Nº SIGAD base',
+    text: 'Último número de documento registrado no SIGAD. O sistema calculará automaticamente os próximos: base+1, base+3, base+5 para os documentos desta fase.',
+    tip: 'Se não souber, consulte o SIGAD antes de gerar.'
+  },
+  {
+    selector: null,
+    title: 'Concluído! 🎉',
+    text: 'Preencha os 4 campos e clique em "⚡ Gerar documento". O Nº do Pregão ficará salvo para os próximos modais da Fase 2.',
+  }
+],
+
+'modal-144': [
+  {
+    selector: null,
+    title: '📄 Ato de Designação',
+    text: 'Designa oficialmente o Pregoeiro e a Equipe de Apoio que conduzirão o pregão eletrônico.'
+  },
+  {
+    selector: '#m144-pregoeiro',
+    title: 'Pregoeiro',
+    text: 'Selecione o pregoeiro responsável pelo pregão. A lista contém os pregoeiros cadastrados na DGA. Este dado será salvo no Checklist e reutilizado nos próximos documentos.',
+    tip: 'Se o pregoeiro não estiver na lista, entre em contato com a supervisão para cadastro.'
+  },
+  {
+    selector: '#m144-equipe-nomes',
+    title: 'Equipe de Apoio — Nomes',
+    text: 'Digite um nome por linha, na ordem exata em que os CPFs serão informados abaixo. O sistema pré-preenche com os membros padrão — revise antes de gerar.'
+  },
+  {
+    selector: '#m144-equipe-cpfs',
+    title: 'Equipe de Apoio — CPFs',
+    text: 'Digite um CPF por linha, na mesma ordem dos nomes acima. Formato: 000.000.000-00.',
+    tip: 'A ordem deve ser idêntica à dos nomes — cada linha corresponde ao membro da linha de cima.'
+  },
+  {
+    selector: '#m144-resp',
+    title: 'Responsável pela assinatura',
+    text: 'Selecione quem assinará o Ato de Designação — geralmente o Diretor ou substituto.'
+  },
+  {
+    selector: null,
+    title: 'Concluído! 🎉',
+    text: 'Revise os membros da equipe e clique em "⚡ Gerar documento". O Pregoeiro ficará salvo no Checklist para o Aviso de Abertura e os e-mails.'
+  }
+],
+
+'modal-148': [
+  {
+    selector: null,
+    title: '📄 Aviso de Abertura',
+    text: 'Gera o aviso oficial de abertura do pregão com as datas de publicação e sessão. Processo, Objeto, Pregoeiro e Nº do Pregão são lidos automaticamente do Checklist.'
+  },
+  {
+    selector: '#m148-dpub',
+    title: 'Data de Publicação',
+    text: 'Data em que o aviso será publicado no DOE-SP. Deve ser um dia útil do calendário DGA/Unicamp — sábados, domingos e feriados são bloqueados automaticamente.'
+  },
+  {
+    selector: '#m148-dpreg',
+    title: 'Data do Pregão',
+    text: 'Data da sessão pública do pregão. O sistema calcula automaticamente a data mínima (8 dias úteis após a publicação) e bloqueia datas inválidas.',
+    tip: 'O prazo de 8 dias úteis é exigência legal. O sistema indica a data mínima permitida ao lado do campo.'
+  },
+  {
+    selector: null,
+    title: 'Concluído! 🎉',
+    text: 'Preencha as duas datas e clique em "⚡ Gerar documento". As datas ficam salvas no Checklist para o E-mail de Abertura e o Despacho p/ Central de Pregão.'
+  }
+],
+
+'modal-149': [
+  {
+    selector: null,
+    title: '✉️ E-mail Gibbor — Folha de SP',
+    text: 'Cria um rascunho de e-mail no Gmail para a Gibbor com as informações do pregão para publicação na Folha de SP. Todos os dados são lidos automaticamente do Checklist.',
+    tip: 'Objeto, Nº do Pregão e Data de Publicação vêm dos documentos gerados anteriormente.'
+  },
+  {
+    selector: '#m149-preview',
+    title: 'Prévia do rascunho',
+    text: 'Esta caixa mostra como o e-mail ficará antes de criar. Verifique se os dados estão corretos — especialmente o Nº do Pregão e a Data de Publicação.',
+    tip: 'Se algum campo aparecer como "(não preenchido)", volte ao modal correspondente e gere o documento primeiro.'
+  },
+  {
+    selector: null,
+    title: 'Concluído! 🎉',
+    text: 'Clique em "✉️ Criar rascunho" para gerar o e-mail no Gmail. Acesse o Gmail, revise e envie manualmente.'
+  }
+],
+
+'modal-1413': [
+  {
+    selector: null,
+    title: '✉️ E-mail de Abertura aos Interessados',
+    text: 'Cria rascunho de e-mail notificando os interessados sobre a abertura do pregão. Enviado para supri.materiais@dga.unicamp.br com cópia para centralpreg@dga.unicamp.br.',
+    tip: 'Dados lidos automaticamente: Objeto, Nº do Pregão, Data do Pregão e Pregoeiro.'
+  },
+  {
+    selector: '#m1413-preview',
+    title: 'Prévia do rascunho',
+    text: 'Mostra como o e-mail ficará. Os campos inline permitem corrigir dados diretamente aqui caso estejam desatualizados — a prévia atualiza em tempo real.',
+    tip: 'Se um campo mostrar "(não preenchido)", corrija inline ou volte ao modal da etapa correspondente.'
+  },
+  {
+    selector: null,
+    title: 'Concluído! 🎉',
+    text: 'Confira a prévia e clique em "✉️ Criar rascunho". O rascunho aparecerá no Gmail para revisão e envio manual.'
+  }
+],
+
+'modal-1414': [
+  {
+    selector: null,
+    title: '📄 Despacho p/ Central de Pregão',
+    text: 'Gera o despacho de encaminhamento do processo para a Central de Pregão, com os dados do pregão e do pregoeiro designado. Deve ser enviado antes da data do pregão.',
+    tip: 'Processo, Objeto, Nº do Pregão, Data do Pregão e Pregoeiro são todos lidos automaticamente do Checklist.'
+  },
+  {
+    selector: null,
+    title: 'Sem campos para preencher!',
+    text: 'Este é um dos documentos mais simples — todos os dados vêm do Checklist. Basta verificar se as informações na tela estão corretas e clicar em "⚡ Gerar documento".',
+    tip: 'Se algum dado estiver errado, feche este modal, corrija no documento de origem (ex: Aviso de Abertura) e volte aqui.'
+  },
+  {
+    selector: null,
+    title: 'Concluído! 🎉',
+    text: 'Clique em "⚡ Gerar documento" para gerar o despacho no Drive. Encaminhe-o para a Central de Pregão com antecedência suficiente.'
+  }
+],
+'modal-hom': [
+  {
+    selector: null,
+    title: '🔄 Tabela de Homologação',
+    text: 'Utilitário que registra o resultado do pregão: valor homologado, fornecedor e CNPJ por item. É a base para todos os documentos da Fase 3 — Resultado Final, Aviso de Divulgação e Despacho p/ Contratos.'
+  },
+  {
+    selector: '#btn-ler-termos',
+    title: 'Importar Termos de Homologação',
+    text: 'Selecione os PDFs dos Termos de Homologação baixados do Compras.gov. O sistema extrai automaticamente o valor homologado e o fornecedor de cada item, preenchendo a tabela abaixo.',
+    tip: 'Você pode selecionar múltiplos PDFs de uma vez. Se preferir, preencha manualmente linha por linha.'
+  },
+  {
+    selector: '#mhom-itens',
+    title: 'Tabela de itens',
+    text: 'Lista os itens vindos da Pesquisa de Preços. Para cada item preencha o Valor Homologado, o Fornecedor vencedor e o CNPJ. Se importou os PDFs, esses campos já vêm preenchidos — revise antes de salvar.',
+    tip: 'Se a tabela aparecer vazia, é porque a Pesquisa de Preços da Fase 1 ainda não foi executada para este processo.'
+  },
+  {
+    selector: '#mhom-data',
+    title: 'Data da Homologação',
+    text: 'Data oficial em que o pregão foi homologado. Será salva no Checklist e usada nos documentos finais da Fase 3.'
+  },
+  {
+    selector: null,
+    title: 'Concluído! 🎉',
+    text: 'Preencha os valores e clique em "🔄 Sincronizar tabela". Os dados ficam salvos no Checklist e os documentos da Fase 3 passam a usar essas informações automaticamente.',
+    tip: '💡 Você pode voltar aqui para corrigir valores a qualquer momento — basta sincronizar novamente.'
+  }
+],
+'modal-172': [
+  {
+    selector: null,
+    title: '📄 Resultado Final (17.2)',
+    text: 'Gera o documento oficial de resultado do pregão com os vencedores por item. Processo, Nº do Pregão e Data de Homologação são lidos automaticamente do Checklist.',
+    tip: 'Se Nº do Pregão ou Data de Homologação aparecerem em vermelho, complete-os nos modais anteriores antes de gerar.'
+  },
+  {
+    selector: '#m172-pncp',
+    title: 'ID PNCP',
+    text: 'Identificador único do pregão no Portal Nacional de Contratações Públicas. Formato: 12345678000100-1-000123/2026. Encontre no Compras.gov após a homologação.',
+    tip: 'Este ID fica salvo no Checklist e será reutilizado no Aviso de Divulgação (17.3).'
+  },
+  {
+    selector: '#m172-link',
+    title: 'Link Compras.gov',
+    text: 'Link direto para o pregão no portal Compras.gov. Opcional, mas recomendado para facilitar consultas futuras.'
+  },
+  {
+    selector: null,
+    title: 'Vencedores automáticos',
+    text: 'O sistema monta automaticamente o texto de resultado agrupando os itens por fornecedor vencedor — baseado na Tabela de Homologação preenchida no passo anterior.',
+    tip: 'Itens marcados como "Fracassado" são excluídos automaticamente do resultado.'
+  },
+  {
+    selector: null,
+    title: 'Concluído! 🎉',
+    text: 'Preencha o ID PNCP e clique em "⚡ Gerar documento". O documento abrirá automaticamente e o ID PNCP ficará salvo para o Aviso de Divulgação.'
+  }
+],
+'modal-173': [
+  {
+    selector: null,
+    title: '📄 Aviso de Divulgação (17.3)',
+    text: 'Gera o aviso oficial de divulgação do resultado do pregão. Todos os dados — Nº do Pregão e ID PNCP — são lidos automaticamente do Checklist.',
+    tip: 'Se algum campo aparecer em vermelho, complete-o no modal correspondente antes de gerar.'
+  },
+  {
+    selector: '#m173-r-preg',
+    title: 'Nº do Pregão',
+    text: 'Lido automaticamente da etapa 14.2 (Informação para Instaurar Sessão). Se aparecer como "(não preenchido)", volte àquele modal e gere o documento primeiro.'
+  },
+  {
+    selector: '#m173-r-pncp',
+    title: 'ID PNCP',
+    text: 'Lido automaticamente do Resultado Final (17.2). Certifique-se de ter gerado o 17.2 e informado o ID PNCP antes de abrir este modal.'
+  },
+  {
+    selector: null,
+    title: 'Concluído! 🎉',
+    text: 'Sem campos para preencher — basta clicar em "⚡ Gerar documento". O aviso abrirá automaticamente no Drive.'
+  }
+],
+
+'modal-175': [
+  {
+    selector: null,
+    title: '✉️ E-mail com Resultado (17.5)',
+    text: 'Cria um rascunho de e-mail no Gmail comunicando o resultado do pregão aos interessados. Todos os dados vêm do Checklist — Nº do Pregão, ID PNCP e fornecedores vencedores.',
+    tip: 'Os fornecedores são extraídos automaticamente da Tabela de Homologação.'
+  },
+  {
+    selector: '#m175-r-preg',
+    title: 'Nº do Pregão',
+    text: 'Lido da etapa 14.2. Se estiver "(não preenchido)", volte ao modal Informação para Instaurar Sessão.'
+  },
+  {
+    selector: '#m175-r-pncp',
+    title: 'ID PNCP',
+    text: 'Lido do Resultado Final (17.2). Precisa ter sido informado naquele modal antes de gerar este e-mail.'
+  },
+  {
+    selector: '#m175-r-forn',
+    title: 'Fornecedores',
+    text: 'Lista os fornecedores vencedores da Tabela de Homologação. Se aparecer "(nenhum fornecedor cadastrado)", volte ao modal de Homologação e preencha a tabela primeiro.'
+  },
+  {
+    selector: null,
+    title: 'Concluído! 🎉',
+    text: 'Sem campos para preencher — clique em "✉️ Criar rascunho". O rascunho aparecerá no Gmail para revisão e envio manual.'
+  }
+],
+'modal-176': [
+  {
+    selector: null,
+    title: '📄 Despacho p/ Contratos (17.6)',
+    text: 'Gera o despacho de encaminhamento para a Divisão de Contratos com os fornecedores vencedores e itens fracassados. Nº do Pregão e fornecedores vêm automaticamente do Checklist.'
+  },
+  {
+    selector: '#m176-r-preg',
+    title: 'Nº do Pregão',
+    text: 'Lido da etapa 14.2. Se aparecer "(não preenchido)", volte ao modal Informação para Instaurar Sessão e gere o documento primeiro.'
+  },
+  {
+    selector: '#m176-r-forn',
+    title: 'Fornecedores vencedores',
+    text: 'Lista gerada automaticamente a partir da Tabela de Homologação. Se aparecer "(nenhum fornecedor cadastrado)", volte ao modal de Homologação e preencha os vencedores por item.'
+  },
+  {
+    selector: '#m176-fracassados',
+    title: 'Itens fracassados',
+    text: 'Descreva os itens que resultaram fracassados no pregão. Se não houver nenhum, deixe em branco — o sistema preencherá automaticamente com "Nenhum item resultou fracassado".',
+    tip: 'Itens marcados como "Fracassado" na Tabela de Homologação já são detectados automaticamente e pré-preenchidos aqui.'
+  },
+  {
+    selector: null,
+    title: 'Concluído! 🎉',
+    text: 'Revise os dados e clique em "⚡ Gerar documento". O despacho abrirá no Drive e ficará salvo na pasta do processo.'
+  }
+],
       // Adicione futuros tours aqui:
       // 'gestao-processos': [ ... ],
       // 'gestao-processos-pratica': [ ... ]
@@ -5872,6 +6331,7 @@ function _carregarPdfLib() {
     _highlighted:     null,
     _praticaListener: null,
     _waitForInterval: null,
+    _aoEntrarFn: null,
 
     start: function (nome) {
       const steps = this.tours[nome];
@@ -5945,6 +6405,7 @@ function _carregarPdfLib() {
       const dotClass    = this._praticaMode ? 'active-pratica' : 'active-tour';
       const btnClass    = this._praticaMode ? 'pratica' : 'tour';
 
+      this._executarAoEntrar(step);   
       this._limparPraticaListener();
       if (this._highlighted) {
         this._highlighted.classList.remove('hlp-highlight', 'pratica');
@@ -6064,7 +6525,11 @@ _iniciarWaitFor: function (selector) {
     }
   }, 400);
 },
-
+_executarAoEntrar: function (step) {
+  if (step.aoEntrar && typeof step.aoEntrar === 'function') {
+    try { step.aoEntrar(); } catch(e) { console.warn('aoEntrar erro:', e); }
+  }
+},
 _pararWaitFor: function () {
   if (this._waitForInterval) {
     clearInterval(this._waitForInterval);
@@ -6139,7 +6604,14 @@ _pararWaitFor: function () {
       const fabPratica = document.createElement('button');
       fabPratica.className = 'hlp-fab pratica';
       fabPratica.innerHTML = '<span class="hlp-fab-icon">🎯</span> Praticar';
-      fabPratica.onclick = function () { HelpTour.start(HelpFab._nomeTour + '-pratica'); };
+      fabPratica.onclick = function () {
+  const nomePratica = HelpFab._nomeTour + '-pratica';
+  if (HelpTour.tours[nomePratica]) {
+    HelpTour.start(nomePratica);
+  } else {
+    HelpTour.start(HelpFab._nomeTour);
+  }
+};
 
       const fabTour = document.createElement('button');
       fabTour.className = 'hlp-fab tour';
@@ -6166,27 +6638,57 @@ _pararWaitFor: function () {
 
   HelpFab.init();
   window.HelpFab = HelpFab;
-
-  /* ─── Detecta abertura/fechamento via classe 'v' ── */
+var _hlpObsTimer = null;
 const modalObserver = new MutationObserver(function () {
-  const ovPP    = document.getElementById('ov-pp');
-  const ovNovo  = document.getElementById('ov-novo');
-  const ovRenov = document.getElementById('ov-renovar-ata');
+  clearTimeout(_hlpObsTimer);
+  _hlpObsTimer = setTimeout(function () {
 
-  if (ovPP && ovPP.classList.contains('v')) {
-    HelpFab.mostrar('pesquisa-precos');
-  } else if (ovNovo && ovNovo.classList.contains('v')) {
-    HelpFab.mostrar('novo-processo');
-  } else if (ovRenov && ovRenov.classList.contains('v')) {
-    HelpFab.mostrar('renovar-ata');
-  } else {
-    HelpFab.esconder();
-    if (HelpTour._current) HelpTour.end();
-  }
+    const ovPP     = document.getElementById('ov-pp');
+    const ovNovo   = document.getElementById('ov-novo');
+    const ovRenov  = document.getElementById('ov-renovar-ata');
+    const ovLimpar = document.getElementById('ov-limpar');
+    const ov142    = document.getElementById('ov-142');
+    const ov144    = document.getElementById('ov-144');
+    const ov148    = document.getElementById('ov-148');
+    const ov149    = document.getElementById('ov-149');
+    const ov1413   = document.getElementById('ov-1413');
+    const ov1414   = document.getElementById('ov-1414');
+    const ov172    = document.getElementById('ov-172');
+    const ov173    = document.getElementById('ov-173');
+    const ov175    = document.getElementById('ov-175'); 
+    const vProc    = document.getElementById('vProc');
+    const ovHom    = document.getElementById('ov-hom');
+    const ov176    = document.getElementById('ov-176');
+
+    const aberto = function(el) { return el && el.classList.contains('v'); };
+
+    if      (aberto(ovPP))     HelpFab.mostrar('pesquisa-precos');
+    else if (aberto(ovNovo))   HelpFab.mostrar('novo-processo');
+    else if (aberto(ovRenov))  HelpFab.mostrar('renovar-ata');
+    else if (aberto(ovLimpar)) HelpFab.mostrar('limpar-docs');
+    else if (aberto(ov142))    HelpFab.mostrar('modal-142');
+    else if (aberto(ov144))    HelpFab.mostrar('modal-144');
+    else if (aberto(ov148))    HelpFab.mostrar('modal-148');
+    else if (aberto(ov149))    HelpFab.mostrar('modal-149');
+    else if (aberto(ov1413))   HelpFab.mostrar('modal-1413');
+    else if (aberto(ov1414))   HelpFab.mostrar('modal-1414');
+    else if (aberto(ovHom))    HelpFab.mostrar('modal-hom');
+    else if (aberto(ov173))    HelpFab.mostrar('modal-173');   // ← nova
+    else if (aberto(ov175))    HelpFab.mostrar('modal-175'); 
+    else if (aberto(ov172))    HelpFab.mostrar('modal-172'); 
+    else if (aberto(ov176))    HelpFab.mostrar('modal-176');
+    else if (vProc && vProc.style.display !== 'none' && vProc.offsetParent !== null) {
+      HelpFab.mostrar('fases-processo');
+    } else {
+      HelpFab.esconder();
+      if (HelpTour._current) HelpTour.end();
+    }
+
+  }, 80);
 });
 modalObserver.observe(document.body, {
   attributes: true, subtree: true,
-  attributeFilter: ['class']
+  attributeFilter: ['class', 'style']
 });
 })();
 </script>
